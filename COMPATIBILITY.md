@@ -53,5 +53,9 @@ camera" from "broken":
 - The camera fires in two exclusive module sets: **wide** (A1–A5 + B1–B5,
   reference A1) below ~66 mm, **tele** (B1–B5 + C1–C6, reference B4) at 71 mm and
   above. Never both. A capture that mixes them would be a genuinely new finding.
+  Independently confirmed from the HAL side: the `co.light` vendor tags name the
+  frame sizes `frame_size_ab` / `frame_size_bc` / `frame_size_c` — the same
+  A+B / B+C / C partition, read off the live device rather than the `.lri`. See
+  [HAL-CAPTURE.md](HAL-CAPTURE.md).
 - A row is 28 mm, B row 70 mm, C row 150 mm equivalent.
 - C-row modules are monochrome.
