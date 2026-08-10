@@ -110,6 +110,36 @@ needs the same scrutiny as the output.
 
 ---
 
+### 2026-08-10 — OPEN: readiness is judged by non-zero pixel share, costing ~10 min per render
+
+**Where:** `tools/libcp-export/libcp_export.cpp` (`buffer_has_signal`) · **not fixed yet**
+**Symptom:** `--profile 3` takes 9 min 52 s per capture. At 101 captures that is ~17 h for
+a golden set.
+
+**Root cause:** `poll_until` accepts level 0 once the sampled share of non-zero pixels
+crosses a hardcoded `need` (0.55 above 20 MP). That share is not a completion signal.
+Measured on `L16_00064`: full-res L0 was present at **poll 4** (50.6 % non-zero,
+88.7 % in the centre), then the buffer stayed **byte-identical for ~340 polls** before
+creeping 52.6 → 53.8 → 55.1 % and finally tripping the threshold at poll 349. The poll
+step caps at 2 s, so those wasted rounds are the entire cost: 82 s of CPU across 592 s
+of wall clock — 86 % of the run was spent asleep.
+
+**Why it is dangerous beyond slowness:** the threshold was tuned against one bright
+frame. A capture with a large dark region legitimately never reaches 55 % non-zero, so
+it will burn the full 180 s budget and then fall through to `degraded_dump()` — writing
+a downscaled image with a warning nobody reads during a 17-hour batch. The 1/16 bug is
+fixed; this would reintroduce its effect through a different door.
+
+**Proposed fix:** judge **stability**, not fill. Accept L0 when the sampled signature is
+unchanged across N consecutive polls and coverage exceeds a low floor, keeping an
+absolute timeout as a backstop. On the measured data that fires around poll 7 — seconds
+instead of minutes, and it is scene-independent.
+
+**Guard (once fixed):** a render whose wall time is orders of magnitude above its CPU
+time is waiting on a bad predicate, not computing. Assert the ratio in the runner.
+
+---
+
 ## Recurring patterns
 
 Worth re-reading before declaring anything "works":

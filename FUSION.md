@@ -449,3 +449,31 @@ When working on fusion:
 **Fix:** `try_dump` gained an `only_level` filter; `poll_until` now accepts **level 0 only**, and a lower level is written just once, at the point where the run would otherwise be declared a total failure, with a `WARNING` on stderr and `DEGRADED 1` on stdout.  
 **Measured after fix:** `L16_00064` profile 3 → `10432×7824`, 3.6 MB JPEG, **9 min 52 s** wall (82 s CPU — the rest is the engine working while we poll). Profile 1 unchanged at `4160×3120` in 2.4 s.  
 **Follow-up:** [ ] Golden set at profile 3 costs ~10 min per capture — budget ~17 h for 101 captures and make the runner resumable. [ ] Check whether a shorter poll step or a completion callback in CIAPI removes the polling overhead.
+
+### 2026-08-10 — Pending: reference benchmark of original Lumen on Windows 10
+
+**Confidence:** n/a — planned measurement  
+**Why:** we have no trustworthy number for how fast the original pipeline was. Public
+sources give only the L16 manual's "processing a photo may take a minute" (on-camera
+gallery) and repeated community complaints that desktop Lumen was CPU-heavy; no
+benchmark. Without a reference we cannot say whether our libcp path is fast, slow, or
+merely differently broken.
+
+**What our own data already suggests:** libcp hands back a full-resolution L0 within
+seconds of `render()`. So the original's ~1 minute is probably dominated by reading the
+~160 MB `.lri`, decoding sixteen modules and writing output — not by the fusion itself.
+The 9 min 52 s we measured is our polling predicate, not the engine (see BUGS.md).
+
+**Protocol for a comparable number** (run per capture, several captures, note the scene):
+1. Same `.lri` files on both sides — use captures from the golden corpus, not fresh ones.
+2. Wall-clock from "open in Lumen" to "fused image displayed", and separately to
+   "export written to disk"; the two differ and are often conflated.
+3. Record Lumen version, Windows build, CPU, RAM, and whether the source `.lri` sits on
+   SSD or spinning disk — I/O is the suspected dominant term.
+4. Do a cold and a warm run: Lumen pre-processes in the background, so a second open of
+   the same capture is not a fresh measurement.
+5. Note the output profile actually produced (13 MP vs DESKTOP) — comparing our profile 3
+   against Lumen's default preview would be meaningless.
+
+**Follow-up:** [ ] Run once camera + disk are available. [ ] Record results here and in
+`BUGS.md` if they change the reading of our own timings.
