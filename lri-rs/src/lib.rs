@@ -6,8 +6,8 @@ mod bayer_jpeg;
 mod block;
 pub mod distortion;
 mod error;
-mod fusion;
 pub mod fixtures;
+mod fusion;
 mod mirror_pose;
 pub mod stereo;
 mod types;
@@ -15,10 +15,10 @@ pub mod unpack;
 pub mod warp;
 
 pub use distortion::{CraDistortion, ModuleDistortion, PolynomialDistortion};
-pub use warp::CameraPose;
 pub use error::LriError;
 pub use fusion::*;
 pub use types::*;
+pub use warp::CameraPose;
 
 pub struct LriFile<'lri> {
 	pub image_reference_camera: Option<CameraId>,
@@ -220,9 +220,7 @@ impl<'img> RawImage<'img> {
 				unpack::tenbit(data, count, &mut upack)?;
 				Ok(upack)
 			}
-			RawData::BayerJpeg { .. } => {
-				bayer_jpeg::decode(&self.data, self.width, self.height)
-			}
+			RawData::BayerJpeg { .. } => bayer_jpeg::decode(&self.data, self.width, self.height),
 		}
 	}
 

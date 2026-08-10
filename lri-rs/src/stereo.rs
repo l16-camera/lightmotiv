@@ -3,7 +3,12 @@
 use crate::warp::{homography_at_depth, CameraPose};
 
 /// Scan frontal plane depths; `score(depth_mm)` should return higher for better alignment.
-pub fn plane_sweep<F>(depth_min_mm: f64, depth_max_mm: f64, steps: usize, mut score: F) -> (f64, f64)
+pub fn plane_sweep<F>(
+	depth_min_mm: f64,
+	depth_max_mm: f64,
+	steps: usize,
+	mut score: F,
+) -> (f64, f64)
 where
 	F: FnMut(f64) -> f64,
 {
@@ -23,7 +28,11 @@ where
 }
 
 /// Homography for warping `src` into `dst` at plane depth `depth_mm`.
-pub fn warp_homography(src: &CameraPose, dst: &CameraPose, depth_mm: f64) -> nalgebra::Matrix3<f64> {
+pub fn warp_homography(
+	src: &CameraPose,
+	dst: &CameraPose,
+	depth_mm: f64,
+) -> nalgebra::Matrix3<f64> {
 	homography_at_depth(src, dst, depth_mm)
 }
 

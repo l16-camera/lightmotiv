@@ -31,11 +31,9 @@ impl<'lri> Block<'lri> {
 			BlockType::ViewPreferences => ViewPreferences::parse_from_bytes(self.message_data())
 				.map(Message::ViewPreferences)
 				.map_err(|e| LriError::ProtobufParse(e.to_string())),
-			BlockType::Gps => {
-				GPSData::parse_from_bytes(self.message_data())
-					.map(|_| Message::Gps(()))
-					.map_err(|e| LriError::ProtobufParse(e.to_string()))
-			}
+			BlockType::Gps => GPSData::parse_from_bytes(self.message_data())
+				.map(|_| Message::Gps(()))
+				.map_err(|e| LriError::ProtobufParse(e.to_string())),
 		}
 	}
 
@@ -491,17 +489,20 @@ mod tests {
 				rows.push((
 					module.id(),
 					module.mirror_position,
-					module
-						.af_info
-						.as_ref()
-						.and_then(|af| af.mirror_position),
+					module.af_info.as_ref().and_then(|af| af.mirror_position),
 				));
 			}
 		}
 		eprintln!("light headers={} module rows={}", headers.len(), rows.len());
-		let b2 = rows.iter().find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B2);
-		let b3 = rows.iter().find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B3);
-		let b1 = rows.iter().find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B1);
+		let b2 = rows
+			.iter()
+			.find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B2);
+		let b3 = rows
+			.iter()
+			.find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B3);
+		let b1 = rows
+			.iter()
+			.find(|(id, _, _)| *id == lri_proto::camera_id::CameraID::B1);
 		eprintln!("mirror halls: {rows:?}");
 		if let Some(b2) = b2 {
 			assert_eq!(b2.2, Some(817), "B2 af_info mirror hall");

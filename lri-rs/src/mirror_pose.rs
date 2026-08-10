@@ -45,11 +45,7 @@ pub fn compute_mirror_extrinsics(
 	finalize_mirror_translation(&r_raw, &t_raw, &mut t_out);
 	Some(MirrorExtrinsics {
 		rotation: f64_mat9_to_f32(r_raw),
-		translation: [
-			t_out[0] as f32,
-			t_out[1] as f32,
-			t_out[2] as f32,
-		],
+		translation: [t_out[0] as f32, t_out[1] as f32, t_out[2] as f32],
 	})
 }
 
@@ -67,11 +63,10 @@ pub fn extrinsics_from_movable_mirror(
 pub fn movable_mirror_bundle<'a>(
 	bundles: &'a [crate::fusion::FocusCalibration],
 ) -> Option<(usize, &'a MovableMirrorData)> {
-	bundles.iter().enumerate().find_map(|(i, b)| {
-		b.movable_mirror
-			.as_ref()
-			.map(|mm| (i, mm))
-	})
+	bundles
+		.iter()
+		.enumerate()
+		.find_map(|(i, b)| b.movable_mirror.as_ref().map(|mm| (i, mm)))
 }
 
 fn f64_mat9_to_f32(m: [f64; 9]) -> [f32; 9] {
@@ -273,15 +268,25 @@ mod tests {
 		let ms = MirrorSystemData {
 			real_camera_location: [18.54517, 7.6582804, -3.4655511],
 			real_camera_orientation: [
-				-0.38093942, 0.47482356, 0.7933648, -0.49646932, 0.61882627, -0.60874647,
-				-0.7800022, -0.6257768, 1.5680847e-8,
+				-0.38093942,
+				0.47482356,
+				0.7933648,
+				-0.49646932,
+				0.61882627,
+				-0.60874647,
+				-0.7800022,
+				-0.6257768,
+				1.5680847e-8,
 			],
 			rotation_axis: [0.60439825, 0.7966334, -0.008826814],
 			point_on_rotation_axis: [22.03876, 5.055312, 0.8291366],
 			distance_mirror_plane_to_point_on_rotation_axis: 3.9343035,
 			mirror_normal_at_zero_degrees: [0.79949564, -0.6006531, -0.0047436645],
 			flip_img_around_x: false,
-			mirror_angle_range: crate::fusion::Range2F { min: 35.5, max: 44.75 },
+			mirror_angle_range: crate::fusion::Range2F {
+				min: 35.5,
+				max: 44.75,
+			},
 			reprojection_error: Some(0.35),
 		};
 		let ext = compute_mirror_extrinsics(&ms, 44.755).unwrap();
@@ -342,11 +347,7 @@ mod tests {
 
 	#[test]
 	fn flip_x_mat_negates_second_row() {
-		let m = [
-			[1.0, 2.0, 3.0],
-			[4.0, 5.0, 6.0],
-			[7.0, 8.0, 9.0],
-		];
+		let m = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
 		let f = flip_x_mat(m);
 		assert_eq!(f[0], [1.0, 2.0, 3.0]);
 		assert_eq!(f[1], [-4.0, -5.0, -6.0]);
@@ -389,7 +390,11 @@ mod tests {
 				.find(|(c, _)| *c == m.camera)
 				.map(|(_, s)| s)
 				.expect("focus pick");
-			assert!(sel.has_extrinsics, "{:?} should have mirror extrinsics", m.camera);
+			assert!(
+				sel.has_extrinsics,
+				"{:?} should have mirror extrinsics",
+				m.camera
+			);
 			with_rt += 1;
 		}
 		assert!(with_rt >= 3, "expected mirror extrinsics on shot modules");
@@ -407,15 +412,25 @@ pub(crate) mod tests_support {
 			mirror_system: Some(MirrorSystemData {
 				real_camera_location: [18.54517, 7.6582804, -3.4655511],
 				real_camera_orientation: [
-					-0.38093942, 0.47482356, 0.7933648, -0.49646932, 0.61882627, -0.60874647,
-					-0.7800022, -0.6257768, 1.5680847e-8,
+					-0.38093942,
+					0.47482356,
+					0.7933648,
+					-0.49646932,
+					0.61882627,
+					-0.60874647,
+					-0.7800022,
+					-0.6257768,
+					1.5680847e-8,
 				],
 				rotation_axis: [0.60439825, 0.7966334, -0.008826814],
 				point_on_rotation_axis: [22.03876, 5.055312, 0.8291366],
 				distance_mirror_plane_to_point_on_rotation_axis: 3.9343035,
 				mirror_normal_at_zero_degrees: [0.79949564, -0.6006531, -0.0047436645],
 				flip_img_around_x: false,
-				mirror_angle_range: crate::fusion::Range2F { min: 35.5, max: 44.75 },
+				mirror_angle_range: crate::fusion::Range2F {
+					min: 35.5,
+					max: 44.75,
+				},
 				reprojection_error: Some(0.35),
 			}),
 			actuator_mapping: Some(MirrorActuatorMappingData {

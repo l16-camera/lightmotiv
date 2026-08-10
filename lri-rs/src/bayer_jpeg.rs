@@ -39,7 +39,11 @@ pub fn decode(data: &RawData<'_>, width: usize, height: usize) -> Result<Vec<u16
 }
 
 /// Fast grid preview: decode a single JPEG plane (¼ decode work for colour).
-pub fn decode_preview(data: &RawData<'_>, width: usize, height: usize) -> Result<PreviewPixels, LriError> {
+pub fn decode_preview(
+	data: &RawData<'_>,
+	width: usize,
+	height: usize,
+) -> Result<PreviewPixels, LriError> {
 	match data {
 		RawData::Packed10bpp { .. } => Err(LriError::UnsupportedFormat),
 		RawData::BayerJpeg { format, jpeg0, .. } => match *format {

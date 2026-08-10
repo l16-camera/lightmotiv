@@ -286,10 +286,7 @@ impl ViewOutput {
 	}
 
 	fn crop_is_normalized(crop: &ViewCrop) -> bool {
-		crop.start[0] <= 1.0
-			&& crop.start[1] <= 1.0
-			&& crop.size[0] <= 1.0
-			&& crop.size[1] <= 1.0
+		crop.start[0] <= 1.0 && crop.start[1] <= 1.0 && crop.size[0] <= 1.0 && crop.size[1] <= 1.0
 	}
 
 	/// Pixel crop rect clamped to `canvas`, or full frame when cropping disabled.

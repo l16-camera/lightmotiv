@@ -25,7 +25,11 @@ impl CameraPose {
 		k[(0, 2)] *= s;
 		k[(1, 1)] *= s;
 		k[(1, 2)] *= s;
-		Self { k, r: self.r, t: self.t }
+		Self {
+			k,
+			r: self.r,
+			t: self.t,
+		}
 	}
 }
 

@@ -7,15 +7,16 @@ const L16_LRI_CANDIDATES: &[&str] = &[
 		env!("CARGO_MANIFEST_DIR"),
 		"/../.data-from-camera/from-lumen/L16_00078.lri"
 	),
-	concat!(env!("CARGO_MANIFEST_DIR"), "/../.data-from-camera/L16_00078.lri"),
-];
-
-const L16_LUMEN_JPG_CANDIDATES: &[&str] = &[
 	concat!(
 		env!("CARGO_MANIFEST_DIR"),
-		"/../.data-from-camera/from-lumen/Light/Export/2026-07-14/L16_00078.jpg"
+		"/../.data-from-camera/L16_00078.lri"
 	),
 ];
+
+const L16_LUMEN_JPG_CANDIDATES: &[&str] = &[concat!(
+	env!("CARGO_MANIFEST_DIR"),
+	"/../.data-from-camera/from-lumen/Light/Export/2026-07-14/L16_00078.jpg"
+)];
 
 /// Resolved path to `L16_00078.lri` when present in `.data-from-camera/`.
 pub fn l16_00078_path() -> Option<PathBuf> {

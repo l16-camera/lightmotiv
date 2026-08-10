@@ -8,8 +8,7 @@ fn bench_tenbit(c: &mut Criterion) {
 
 	c.bench_function("tenbit_4160x3120", |b| {
 		b.iter(|| {
-			lri_rs::unpack::tenbit(black_box(&packd), count, black_box(&mut out))
-				.expect("unpack");
+			lri_rs::unpack::tenbit(black_box(&packd), count, black_box(&mut out)).expect("unpack");
 		});
 	});
 }

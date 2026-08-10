@@ -209,7 +209,8 @@ pub fn pick_focus_bundle_with_mirror(
 	shot_focal_mm: i32,
 	mirror_hall_code: Option<i32>,
 ) -> Option<SelectedFocusBundle> {
-	let (intrinsics_index, intrinsics) = pick_intrinsics_bundle(&module.focus_calibrations, shot_focal_mm)?;
+	let (intrinsics_index, intrinsics) =
+		pick_intrinsics_bundle(&module.focus_calibrations, shot_focal_mm)?;
 
 	let canonical = pick_extrinsics_bundle(&module.focus_calibrations);
 	let mirror = movable_mirror_bundle(&module.focus_calibrations).and_then(|(idx, mm)| {
@@ -258,12 +259,17 @@ pub fn pick_focus_bundle_with_mirror(
 		reprojection_error,
 		has_movable_mirror: intrinsics.has_movable_mirror
 			|| movable_mirror_bundle(&module.focus_calibrations).is_some()
-			|| canonical.map(|(_, e)| e.has_movable_mirror).unwrap_or(false),
+			|| canonical
+				.map(|(_, e)| e.has_movable_mirror)
+				.unwrap_or(false),
 		has_extrinsics,
 	})
 }
 
-pub fn pick_focus_bundle(module: &ModuleGeometry, shot_focal_mm: i32) -> Option<SelectedFocusBundle> {
+pub fn pick_focus_bundle(
+	module: &ModuleGeometry,
+	shot_focal_mm: i32,
+) -> Option<SelectedFocusBundle> {
 	pick_focus_bundle_with_mirror(module, shot_focal_mm, None)
 }
 
@@ -275,11 +281,7 @@ impl FusionMeta {
 	pub fn modules_with_intrinsics(&self) -> usize {
 		self.module_geometry
 			.iter()
-			.filter(|m| {
-				m.focus_calibrations
-					.iter()
-					.any(|f| f.k_matrix.is_some())
-			})
+			.filter(|m| m.focus_calibrations.iter().any(|f| f.k_matrix.is_some()))
 			.count()
 	}
 
@@ -315,12 +317,7 @@ impl FusionMeta {
 mod tests {
 	use super::*;
 
-	fn bundle(
-		fd: f32,
-		hall: Option<f32>,
-		k: bool,
-		rt: bool,
-	) -> FocusCalibration {
+	fn bundle(fd: f32, hall: Option<f32>, k: bool, rt: bool) -> FocusCalibration {
 		FocusCalibration {
 			focus_distance: fd,
 			k_matrix: k.then(|| [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]),
@@ -412,7 +409,9 @@ mod tests {
 			return;
 		};
 		let lri = crate::LriFile::decode(&bytes).expect("decode fixture");
-		let picks = lri.fusion.pick_all_focus_bundles(lri.focal_length.unwrap_or(87));
+		let picks = lri
+			.fusion
+			.pick_all_focus_bundles(lri.focal_length.unwrap_or(87));
 		assert_eq!(picks.len(), 16);
 		let b1 = picks
 			.iter()
@@ -539,7 +538,9 @@ pub(crate) fn actuator_transform_from_proto(
 	}
 }
 
-pub(crate) fn extract_mirror_system(ms: lri_proto::mirror_system::MirrorSystem) -> MirrorSystemData {
+pub(crate) fn extract_mirror_system(
+	ms: lri_proto::mirror_system::MirrorSystem,
+) -> MirrorSystemData {
 	MirrorSystemData {
 		real_camera_location: ms
 			.real_camera_location
@@ -677,10 +678,9 @@ pub(crate) fn extract_module_geometry(
 	let mut distortion = crate::distortion::ModuleDistortion::default();
 	if let Some(dist) = geometry.distortion.as_ref() {
 		if let Some(poly) = dist.polynomial.as_ref() {
-			if let (Some(c), Some(n)) = (
-				poly.distortion_center.as_ref(),
-				poly.normalization.as_ref(),
-			) {
+			if let (Some(c), Some(n)) =
+				(poly.distortion_center.as_ref(), poly.normalization.as_ref())
+			{
 				distortion.polynomial = Some(crate::distortion::PolynomialDistortion {
 					center: point2f(c.clone()),
 					normalization: point2f(n.clone()),
@@ -749,4 +749,3 @@ pub(crate) fn tof_from_device(
 		xtalk_measurement: tof.xtalk_measurement(),
 	})
 }
-

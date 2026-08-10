@@ -12,10 +12,7 @@ impl PolynomialDistortion {
 	pub fn pixel_to_normalized(&self, u: f32, v: f32) -> (f32, f32) {
 		let nx = self.normalization[0].max(1e-6);
 		let ny = self.normalization[1].max(1e-6);
-		(
-			(u - self.center[0]) / nx,
-			(v - self.center[1]) / ny,
-		)
+		((u - self.center[0]) / nx, (v - self.center[1]) / ny)
 	}
 
 	/// Pixel coords from normalized (distorted) coords.
@@ -97,10 +94,7 @@ impl CraDistortion {
 		let r_src_mm = (r_mm + delta_mm).max(0.0);
 		let scale = (r_src_mm / r_mm.max(1e-6)).clamp(0.5, 2.0);
 
-		(
-			self.center[0] + dx * scale,
-			self.center[1] + dy * scale,
-		)
+		(self.center[0] + dx * scale, self.center[1] + dy * scale)
 	}
 }
 
@@ -143,7 +137,10 @@ impl ModuleDistortion {
 	}
 
 	pub fn poly_coeffs(&self) -> usize {
-		self.polynomial.as_ref().map(|p| p.coeffs.len()).unwrap_or(0)
+		self.polynomial
+			.as_ref()
+			.map(|p| p.coeffs.len())
+			.unwrap_or(0)
 	}
 
 	/// Lumen order: CRA (`LensUndistortCRA`) then polynomial.
@@ -293,12 +290,12 @@ mod tests {
 			.iter()
 			.find(|m| m.camera == crate::CameraId::A1)
 			.expect("A1");
-		let poly = a1
-			.distortion
-			.polynomial
-			.as_ref()
-			.expect("A1 polynomial");
-		assert!(poly.coeffs.len() >= 3, "expected >=3 coeffs, got {}", poly.coeffs.len());
+		let poly = a1.distortion.polynomial.as_ref().expect("A1 polynomial");
+		assert!(
+			poly.coeffs.len() >= 3,
+			"expected >=3 coeffs, got {}",
+			poly.coeffs.len()
+		);
 		assert!(poly.normalization[0] > 100.0);
 	}
 }
