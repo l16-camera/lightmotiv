@@ -103,6 +103,7 @@ Replaces the older `prism` and `lri-study` binaries (still in repo, no longer in
 - [LRI.md](LRI.md) — block format, cameras, colour calibration
 - [bayer_jpeg.md](bayer_jpeg.md) — BJPG container
 - [FUSION.md](FUSION.md) — Lumen combine research log (geometry, depth, blend) — **living doc for humans and agents**
+- [BUGS.md](BUGS.md) — bug journal: root causes and what let each mistake survive
 
 ## Library example
 
