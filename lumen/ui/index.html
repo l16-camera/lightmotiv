@@ -21,15 +21,22 @@
 				</div>
 			</div>
 			<div class="actions">
+				<span id="cam-pill" class="cam-pill offline" title="Light L16 via adb">camera …</span>
+				<span id="libcp-pill" class="libcp-pill offline" title="Light libcp engine">libcp …</span>
 				<button id="btn-open-file" type="button">Open .lri</button>
 				<button id="btn-open-dir" type="button" class="secondary">Open folder</button>
+				<button id="btn-from-camera" type="button" class="secondary">From camera…</button>
 			</div>
 		</header>
 
 		<main class="layout">
 			<aside class="sidebar">
-				<h2>Captures</h2>
+				<div class="sidebar-head">
+					<h2>Captures</h2>
+					<button id="btn-batch-render" type="button" class="secondary tiny" title="libcp all in list">Batch render</button>
+				</div>
 				<ul id="file-list" class="file-list"></ul>
+				<div id="batch-status" class="batch-status hidden"></div>
 			</aside>
 
 			<section class="content">
@@ -48,70 +55,160 @@
 						<div id="camera-grid" class="camera-grid"></div>
 					</div>
 
-					<div class="panel fuse-panel">
+					<div class="panel mono-panel" id="mono-panel">
 						<div class="panel-head">
-							<h2>Fuse</h2>
-							<span class="badge">16 → 1</span>
+							<h2>Mono (panchromatic)</h2>
+							<span id="mono-badge" class="badge mono-badge">—</span>
 						</div>
-
-						<div id="fuse-drop-zone" class="fuse-drop-zone">
-							<p class="fuse-drop-title">Drop to fuse</p>
-							<p class="fuse-drop-hint">.lri → fuse · folder → export here</p>
+						<p id="mono-detail" class="mono-detail">A2 ≈ 28 mm · C6 ≈ 150 mm · AR1335 without CFA</p>
+						<div class="mono-actions">
+							<button id="btn-export-mono" type="button" class="secondary">Export mono DNGs…</button>
 						</div>
+					</div>
 
-						<div class="fuse-controls">
-							<div class="fuse-mode">
+					<div class="panel render-panel">
+						<div class="panel-head">
+							<h2>Render</h2>
+							<span class="badge">Light engine · 16 → 1</span>
+						</div>
+						<p class="render-hint">
+							Native <code>libcp</code> (same as Lumen). Preview ~13 MP · Desktop canvas 10432×7824.
+						</p>
+
+						<div class="render-controls">
+							<div class="fuse-mode" id="libcp-profile">
 								<label class="radio-pill">
-									<input type="radio" name="fuse-mode" value="preview" checked />
-									<span>Preview</span>
+									<input type="radio" name="libcp-profile" value="1" checked />
+									<span>Preview 13 MP</span>
 								</label>
 								<label class="radio-pill">
-									<input type="radio" name="fuse-mode" value="full-res" />
-									<span>Full-res</span>
+									<input type="radio" name="libcp-profile" value="3" />
+									<span>Desktop quality</span>
 								</label>
 							</div>
-
-							<div class="fuse-options" id="fuse-export-options">
-								<label class="check">
-									<input type="checkbox" id="opt-tiff" checked />
-									<span>TIFF 16-bit</span>
+							<div class="dof-controls" id="dof-controls">
+								<label class="dof-row" title="Synthetic aperture (CIAPI ViewDofFNumber). 0 = engine default">
+									<span class="dof-label">Aperture</span>
+									<input type="range" id="dof-fnumber" min="0" max="15" step="0.5" value="0" />
+									<span id="dof-fnumber-val" class="dof-val">default</span>
 								</label>
-								<label class="check">
-									<input type="checkbox" id="opt-dng" checked />
-									<span>DNG</span>
+								<label class="check dof-check" title="Write low-res depth colormap from DepthEditor">
+									<input type="checkbox" id="dof-depth-map" />
+									<span>Depth map</span>
 								</label>
+								<label class="check dof-check" title="Alt+click on image to set focus (or enable this and click)">
+									<input type="checkbox" id="dof-focus-mode" />
+									<span>Click focus</span>
+								</label>
+								<span id="dof-focus-label" class="dof-focus-label">focus: default</span>
 							</div>
-
 							<div class="fuse-actions">
-								<button id="btn-fuse" type="button">Fuse</button>
-								<button id="btn-fuse-export" type="button" class="secondary hidden">Fuse to folder…</button>
-								<span id="fuse-status" class="status"></span>
+								<button id="btn-libcp" type="button">Render</button>
+								<button id="btn-libcp-export" type="button" class="secondary" disabled>Export JPEG…</button>
+								<button id="btn-libcp-reveal" type="button" class="secondary" disabled>Show file</button>
+								<span id="libcp-status" class="status"></span>
 							</div>
-
-							<div class="fuse-progress-wrap hidden" id="fuse-progress-wrap">
+							<p class="dof-hint">Alt+click (or Click focus) on the preview to refocus · aperture f/2–f/15</p>
+							<div class="fuse-progress-wrap hidden" id="libcp-progress-wrap">
 								<div class="progress-track">
-									<div class="progress-bar" id="fuse-progress-bar"></div>
+									<div class="progress-bar indeterminate" id="libcp-progress-bar"></div>
 								</div>
-								<span id="fuse-progress-label" class="progress-label"></span>
+								<span id="libcp-progress-label" class="progress-label">Rendering via Rosetta…</span>
 							</div>
 						</div>
 
-						<div id="fuse-result" class="fuse-result hidden">
-							<div class="fuse-preview-wrap">
-								<img id="fuse-preview" alt="Fused preview" title="Drag to export" />
+						<div id="libcp-result" class="fuse-result hidden">
+							<div class="viewer-col">
+								<div class="viewer-toolbar">
+									<button type="button" class="secondary tiny" id="zoom-out" title="Zoom out">−</button>
+									<button type="button" class="secondary tiny" id="zoom-fit" title="Fit">Fit</button>
+									<button type="button" class="secondary tiny" id="zoom-100" title="100%">100%</button>
+									<button type="button" class="secondary tiny" id="zoom-in" title="Zoom in">+</button>
+									<span id="zoom-label" class="zoom-label">100%</span>
+									<button type="button" class="secondary tiny hidden" id="btn-show-depth" title="Toggle depth map">Depth</button>
+								</div>
+								<div class="fuse-preview-wrap libcp-viewer" id="libcp-viewer">
+									<div class="viewer-stage" id="viewer-stage">
+										<img id="libcp-preview" alt="LibCP render" draggable="false" />
+										<div id="focus-marker" class="focus-marker hidden"></div>
+									</div>
+								</div>
 							</div>
 							<div class="fuse-side">
-								<div class="fuse-stats" id="fuse-stats"></div>
-								<div id="fuse-exports" class="fuse-exports hidden">
-									<p class="fuse-exports-label">Drag out</p>
-									<div id="fuse-export-chips" class="fuse-export-chips"></div>
-								</div>
+								<div class="fuse-stats" id="libcp-stats"></div>
+								<img id="libcp-depth-thumb" class="depth-thumb hidden" alt="Depth map" />
 							</div>
 						</div>
 					</div>
 
+					<details class="panel experimental-panel">
+						<summary class="panel-head experimental-summary">
+							<span>Experimental · software fuse</span>
+							<span class="badge">lab</span>
+						</summary>
+						<div class="experimental-body">
+							<p class="render-hint">Open plane-sweep (gray MVP). Not Lumen quality — geometry research only.</p>
+
+							<div id="fuse-drop-zone" class="fuse-drop-zone">
+								<p class="fuse-drop-title">Drop to software-fuse</p>
+								<p class="fuse-drop-hint">.lri → fuse · folder → export here</p>
+							</div>
+
+							<div class="fuse-controls">
+								<div class="fuse-mode">
+									<label class="radio-pill">
+										<input type="radio" name="fuse-mode" value="preview" checked />
+										<span>Preview</span>
+									</label>
+									<label class="radio-pill">
+										<input type="radio" name="fuse-mode" value="full-res" />
+										<span>Full-res</span>
+									</label>
+								</div>
+
+								<div class="fuse-options" id="fuse-export-options">
+									<label class="check">
+										<input type="checkbox" id="opt-tiff" checked />
+										<span>TIFF 16-bit</span>
+									</label>
+									<label class="check">
+										<input type="checkbox" id="opt-dng" checked />
+										<span>DNG</span>
+									</label>
+								</div>
+
+								<div class="fuse-actions">
+									<button id="btn-fuse" type="button" class="secondary">Fuse (software)</button>
+									<button id="btn-fuse-export" type="button" class="secondary hidden">Fuse to folder…</button>
+									<span id="fuse-status" class="status"></span>
+								</div>
+
+								<div class="fuse-progress-wrap hidden" id="fuse-progress-wrap">
+									<div class="progress-track">
+										<div class="progress-bar" id="fuse-progress-bar"></div>
+									</div>
+									<span id="fuse-progress-label" class="progress-label"></span>
+								</div>
+							</div>
+
+							<div id="fuse-result" class="fuse-result hidden">
+								<div class="fuse-preview-wrap">
+									<img id="fuse-preview" alt="Fused preview" title="Drag to export" />
+								</div>
+								<div class="fuse-side">
+									<div class="fuse-stats" id="fuse-stats"></div>
+									<div id="fuse-exports" class="fuse-exports hidden">
+										<p class="fuse-exports-label">Drag out</p>
+										<div id="fuse-export-chips" class="fuse-export-chips"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</details>
+
 					<div class="panel export-row">
-						<button id="btn-export" type="button" class="secondary">Export DNGs…</button>
+						<button id="btn-export" type="button" class="secondary">Export all DNGs…</button>
+						<button id="btn-export-mono-2" type="button" class="secondary">Export mono…</button>
 						<div class="export-progress-wrap hidden" id="export-progress-wrap">
 							<div class="progress-track">
 								<div class="progress-bar" id="progress-bar"></div>
@@ -124,6 +221,87 @@
 			</section>
 		</main>
 		<footer class="colophon">isamarin × BLMK</footer>
+	</div>
+
+	<div id="setup-modal" class="modal-backdrop hidden">
+		<div class="modal setup-modal" role="dialog" aria-label="Setup libcp">
+			<div class="modal-head">
+				<div>
+					<h2>Set up Light engine</h2>
+					<p>One-time · same libcp as official Lumen</p>
+				</div>
+			</div>
+			<div class="setup-body">
+				<ol class="setup-steps">
+					<li>
+						<strong>libcp.dylib</strong>
+						<p>Install <em>Lumen.app</em> or pick its Frameworks folder (contains libcp + libceres).</p>
+						<div class="setup-row">
+							<span id="setup-libcp-state" class="setup-badge">…</span>
+							<button type="button" class="secondary tiny" id="setup-pick-libcp">Choose folder…</button>
+						</div>
+					</li>
+					<li>
+						<strong>libcp-export helper</strong>
+						<p>x86_64 binary (Rosetta). Built with <code>make libcp-export</code>, or pick the file.</p>
+						<div class="setup-row">
+							<span id="setup-helper-state" class="setup-badge">…</span>
+							<button type="button" class="secondary tiny" id="setup-pick-helper">Choose file…</button>
+						</div>
+					</li>
+				</ol>
+				<p class="setup-note">Config: <code id="setup-config-path">—</code></p>
+			</div>
+			<div class="modal-foot">
+				<button type="button" class="secondary" id="setup-skip">Skip for now</button>
+				<button type="button" id="setup-done" disabled>Continue</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="cam-modal" class="modal-backdrop hidden">
+		<div class="modal" role="dialog" aria-label="Camera LRI browser">
+			<div class="modal-head">
+				<div>
+					<h2>From camera</h2>
+					<p id="cam-modal-sub">Light L16 · USB · DCIM/Camera</p>
+				</div>
+				<button id="cam-modal-close" type="button" class="secondary tiny">×</button>
+			</div>
+			<div class="modal-toolbar">
+				<span id="cam-modal-count">—</span>
+				<div class="modal-tools">
+					<button id="cam-select-all" type="button" class="linkish">All</button>
+					<button id="cam-select-none" type="button" class="linkish">None</button>
+					<button id="cam-refresh" type="button" class="linkish">Refresh</button>
+				</div>
+			</div>
+			<div id="cam-modal-body" class="modal-body">
+				<p class="modal-empty">Connect L16 with USB debugging…</p>
+			</div>
+			<div class="modal-foot">
+				<label class="check">
+					<input type="checkbox" id="cam-also-render" />
+					<span>Render after pull (libcp)</span>
+				</label>
+				<div class="modal-foot-actions">
+					<button id="cam-cancel" type="button" class="secondary">Cancel</button>
+					<button id="cam-pull" type="button" disabled>
+						<span class="btn-spinner hidden" id="cam-pull-spinner" aria-hidden="true"></span>
+						<span id="cam-pull-label">Pull selected</span>
+					</button>
+				</div>
+			</div>
+			<div id="cam-pull-progress" class="cam-pull-progress hidden" aria-live="polite">
+				<div class="cam-pull-progress-row">
+					<span class="btn-spinner" aria-hidden="true"></span>
+					<span id="cam-pull-status" class="cam-pull-status-text">Pulling…</span>
+				</div>
+				<div class="progress-track">
+					<div class="progress-bar indeterminate" id="cam-pull-bar"></div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<script src="main.js"></script>
