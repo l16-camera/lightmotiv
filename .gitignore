@@ -6,3 +6,6 @@
 *.gif
 **/.DS_Store
 /.data-from-camera/
+/dist/
+# local symlink to the lri-drop working copy, not part of this repo
+/lri-drop
