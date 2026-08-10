@@ -439,3 +439,13 @@ When working on fusion:
 **Finding:** Product track reached M4. Tauri 2 GUI with Light-engine Render (profile 1 ≈ 13 MP / profile 3 DESKTOP 10432×7824), ADB camera list/pull, batch render, `.app` packaging with embedded `libcp-export`, and M4 extras reverse-engineered from CIAPI: `setProperty(ParamFloat)` FocusDepth=1 / FNumber=3, `DepthEditor` 16 B shared_ptr with `getDepthAtPoint(Point<float>)`. Smoke on `L16_00026`: f/4 + click (0.5, 0.4) at profile 3 → z ≈ 16829 mm, depth map 320×240 valid.  
 **Implication for combine:** Quality 16→1 is intentionally **libcp-only** in the product; the in-tree fuse stays the open research track. This means Luminat currently depends on the user's own `Lumen.app` for `libcp.dylib` + `libceres.dylib` (x86_64, Rosetta) — a dependency the open engine is meant to eventually retire.  
 **Follow-up:** [ ] Golden set: run all 101 captures through `libcp` (profiles 1 and 3, plus depth maps) and store outputs as ground truth. This both measures the open engine (SSIM/PSNR) and preserves libcp behaviour against the day Rosetta or Lumen.app stops working.
+
+### 2026-08-10 — DESKTOP profile was silently rendering at 1/16 scale
+
+**Confidence:** confirmed  
+**Source:** `tools/libcp-export/libcp_export.cpp` (`try_dump` / `poll_until`), runs on `L16_00064`  
+**Finding:** libcp fills its output `ImagePyramid` **coarse-to-fine**. The helper scanned every level and accepted the first one carrying signal, then returned immediately. Early in a render only the coarsest level (L4) has data, so profile 3 accepted `652×489` — exactly 1/16 of the requested `10432×7824` — after 3.4 s of a 180 s budget. Profile 1 (13 MP) was unaffected only because L0 happens to fill inside one polling interval.  
+**Implication:** every DESKTOP-profile output produced before this fix is downscaled, including the M4 smoke in [LUMEN_PLAN.md](LUMEN_PLAN.md) (its depth map was genuine, the image was not). Any golden set built on the old helper would have baked in the wrong ground truth.  
+**Fix:** `try_dump` gained an `only_level` filter; `poll_until` now accepts **level 0 only**, and a lower level is written just once, at the point where the run would otherwise be declared a total failure, with a `WARNING` on stderr and `DEGRADED 1` on stdout.  
+**Measured after fix:** `L16_00064` profile 3 → `10432×7824`, 3.6 MB JPEG, **9 min 52 s** wall (82 s CPU — the rest is the engine working while we poll). Profile 1 unchanged at `4160×3120` in 2.4 s.  
+**Follow-up:** [ ] Golden set at profile 3 costs ~10 min per capture — budget ~17 h for 101 captures and make the runner resumable. [ ] Check whether a shorter poll step or a completion callback in CIAPI removes the polling overhead.

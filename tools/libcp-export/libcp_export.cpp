@@ -237,8 +237,13 @@ static bool write_depth_ppm(const char *path, const std::vector<float> &z, int w
   return true;
 }
 
+// only_level >= 0 restricts the scan to that pyramid level; -1 accepts the
+// largest level that has signal. libcp fills the pyramid coarse-to-fine, so
+// scanning every level while the render is still in flight always matches the
+// smallest one (L4 = 1/16 scale) and returns a silently downscaled image.
 static int try_dump(fn_outputBuffer outputBuffer, fn_levelCount levelCount, fn_at at, fn_w width,
-                    fn_h height, fn_stride stride, fn_data data, Renderer *r, const char *outpath) {
+                    fn_h height, fn_stride stride, fn_data data, Renderer *r, const char *outpath,
+                    int only_level) {
   ShPtr pyr;
   memset(&pyr, 0, sizeof pyr);
   outputBuffer(&pyr, r);
@@ -246,6 +251,7 @@ static int try_dump(fn_outputBuffer outputBuffer, fn_levelCount levelCount, fn_a
   int n = levelCount(&pyr);
   if (n <= 0) return 0;
   for (int li = 0; li < n; li++) {
+    if (only_level >= 0 && li != only_level) continue;
     ShPtr *img = at(&pyr, li);
     if (!img || !img->ptr) continue;
     int w = width(img), ht = height(img), s = stride(img);
@@ -466,18 +472,31 @@ int main(int argc, char **argv) {
     };
   }
 
+  // Strict: only level 0 (the requested full resolution) counts as success.
   auto poll_until = [&](int budget_ms) -> bool {
     int waited = 0;
     int step = 400;
     while (waited < budget_ms) {
       std::this_thread::sleep_for(std::chrono::milliseconds(step));
       waited += step;
-      if (try_dump(outputBuffer, levelCount, at, width, height, stride, data, &r, outpath)) {
+      if (try_dump(outputBuffer, levelCount, at, width, height, stride, data, &r, outpath, 0)) {
         return true;
       }
       if (step < 2000) step += 200;
     }
     return false;
+  };
+
+  // Last resort before reporting total failure: accept the largest level that
+  // does have signal, but never pretend it is a full-resolution render.
+  auto degraded_dump = [&]() -> bool {
+    if (!try_dump(outputBuffer, levelCount, at, width, height, stride, data, &r, outpath, -1))
+      return false;
+    fprintf(stderr,
+            "WARNING: level 0 never filled; wrote a lower pyramid level (downscaled output)\n");
+    printf("DEGRADED 1\n");
+    fflush(stdout);
+    return true;
   };
 
   auto render_pass = [&](int budget_ms, bool expand) -> bool {
@@ -488,7 +507,7 @@ int main(int argc, char **argv) {
       if (poll_until(budget_ms / (expand ? 2 : 1))) return true;
       if (!expand) break; // first ROI only for refocus re-pass
     }
-    if (!expand) return false;
+    if (!expand) return degraded_dump();
     fprintf(stderr, "fast path empty; expanding search\n");
     for (int rt = 0; rt < 4; rt++) {
       for (const ROI &roi : rois) {
@@ -504,7 +523,7 @@ int main(int argc, char **argv) {
         }
       }
     }
-    return false;
+    return degraded_dump();
   };
 
   // Pass 1: base image (+ optional explicit focus/fnumber)
