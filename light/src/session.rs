@@ -48,10 +48,8 @@ impl LriSession {
 		if guard.is_none() {
 			let bytes = Arc::clone(&self.bytes);
 			*guard = Some(
-				CachedLri::try_new(bytes, |bytes| {
-					LriFile::decode(bytes).context("decode LRI")
-				})
-				.context("cache LRI")?,
+				CachedLri::try_new(bytes, |bytes| LriFile::decode(bytes).context("decode LRI"))
+					.context("cache LRI")?,
 			);
 		}
 		let cached = guard.as_mut().expect("session cache");

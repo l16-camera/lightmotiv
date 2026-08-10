@@ -1,0 +1,6 @@
+/libcp-export
+/vendor/
+*.ppm
+*.jpg
+*.log
+*.dSYM/

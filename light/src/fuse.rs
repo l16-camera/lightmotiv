@@ -151,12 +151,7 @@ fn run_decoded(
 		thumbnail::render_preview_gray(lri, ref_cam, fuse_max_side)?;
 	let ref_pose = pose_from_pick(ref_pick, ref_step);
 
-	let ref_undist = undistort_preview(
-		&ref_bytes,
-		ref_w,
-		ref_h,
-		&ref_module.distortion,
-	)?;
+	let ref_undist = undistort_preview(&ref_bytes, ref_w, ref_h, &ref_module.distortion)?;
 	let ref_img = bytes_to_gray(&ref_undist, ref_w, ref_h);
 
 	// Plane sweep on first non-ref module (tele baseline for depth).
@@ -174,15 +169,13 @@ fn run_decoded(
 	let (tele_bytes, tw, th, tele_step) =
 		thumbnail::render_preview_gray(lri, tele.0, fuse_max_side)?;
 	let tele_pose = pose_from_pick(&tele.1, tele_step);
-	let tele_undist = undistort_preview(&tele_bytes, tw, th, &tele_module.distortion,)?;
+	let tele_undist = undistort_preview(&tele_bytes, tw, th, &tele_module.distortion)?;
 	let tele_img = bytes_to_gray(&tele_undist, tw, th);
 
 	let tof_range_m = lri.fusion.tof_range_m.filter(|t| *t > 0.0);
 	let (sweep_min, sweep_max) = depth_range_from_tof(tof_range_m, depth_min_mm, depth_max_mm);
 	if let Some(tof) = tof_range_m {
-		eprintln!(
-			"tof seed {tof:.2}m → sweep {sweep_min:.0}–{sweep_max:.0}mm"
-		);
+		eprintln!("tof seed {tof:.2}m → sweep {sweep_min:.0}–{sweep_max:.0}mm");
 	}
 
 	on_progress("prepare", 1, 1);
@@ -229,8 +222,7 @@ fn run_decoded(
 			continue;
 		}
 		on_progress("warp", warped_count, warp_total);
-		let (bytes, sw, sh, step) =
-			thumbnail::render_preview_gray(lri, *camera, fuse_max_side)?;
+		let (bytes, sw, sh, step) = thumbnail::render_preview_gray(lri, *camera, fuse_max_side)?;
 		let module = lri
 			.fusion
 			.module_geometry
@@ -238,7 +230,7 @@ fn run_decoded(
 			.find(|m| m.camera == *camera)
 			.context("module geometry")?;
 		let src_pose = pose_from_pick(sel, step);
-		let undist = undistort_preview(&bytes, sw, sh, &module.distortion,)?;
+		let undist = undistort_preview(&bytes, sw, sh, &module.distortion)?;
 		let src_img = bytes_to_gray(&undist, sw, sh);
 		let h = warp_homography(&src_pose, &ref_pose, best_depth);
 		let warped = warp_gray(&src_img, &h, ref_w, ref_h);
@@ -267,7 +259,9 @@ fn run_decoded(
 	let mut exports = vec!["fused.png".to_string()];
 	if full_res {
 		let cropped_path = output.join("fused_cropped.png");
-		cropped.save(&cropped_path).context("write fused_cropped.png")?;
+		cropped
+			.save(&cropped_path)
+			.context("write fused_cropped.png")?;
 		exports.push("fused_cropped.png".to_string());
 	}
 
@@ -338,9 +332,7 @@ fn run_decoded(
 	)?;
 	on_progress("export", 1, 1);
 
-	eprintln!(
-		"fused {warped_count}+1 modules @ {best_depth:.0}mm → {fused_path}"
-	);
+	eprintln!("fused {warped_count}+1 modules @ {best_depth:.0}mm → {fused_path}");
 	if let Some(ncc) = depth_ncc {
 		eprintln!("fused vs lumen ncc={ncc:.4}");
 	}
@@ -359,15 +351,14 @@ fn depth_range_from_tof(
 	};
 	let center_mm = f64::from(tof_m) * 1000.0;
 	let half_span = (depth_max_mm - depth_min_mm) * 0.5;
-	(
-		(center_mm - half_span).max(500.0),
-		center_mm + half_span,
-	)
+	((center_mm - half_span).max(500.0), center_mm + half_span)
 }
 
 fn pose_from_pick(sel: &SelectedFocusBundle, step: usize) -> CameraPose {
 	let k = sel.k_matrix.expect("k");
-	let r = sel.rotation.unwrap_or([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+	let r = sel
+		.rotation
+		.unwrap_or([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
 	let t = sel.translation.unwrap_or([0.0, 0.0, 0.0]);
 	CameraPose::from_row_major(k, r, t).scaled(step)
 }
@@ -466,7 +457,9 @@ fn abs_diff(a: &GrayImage, b: &GrayImage) -> GrayImage {
 }
 
 fn load_lumen_gray(path: &Utf8Path) -> Result<(u32, u32, Vec<u8>)> {
-	let img = image::open(path).with_context(|| format!("open {path}"))?.to_rgb8();
+	let img = image::open(path)
+		.with_context(|| format!("open {path}"))?
+		.to_rgb8();
 	let (w, h) = img.dimensions();
 	let gray: Vec<u8> = img
 		.pixels()
@@ -525,7 +518,10 @@ mod tests {
 		assert_eq!(summary.reference_camera, "A1");
 		assert_eq!(summary.modules_warped, 10);
 		let ncc = summary.depth_ncc_vs_lumen.expect("depth ncc");
-		assert!(ncc > 0.45, "fused ncc should beat polynomial-only baseline, got {ncc}");
+		assert!(
+			ncc > 0.45,
+			"fused ncc should beat polynomial-only baseline, got {ncc}"
+		);
 		assert!(tmp.join("fused.png").exists());
 	}
 }

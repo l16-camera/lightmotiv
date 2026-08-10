@@ -5,6 +5,7 @@ use lri_rs::{AwbMode, DataFormat, HdrMode, LriFile, MirrorType, SceneMode, Senso
 use rayon::prelude::*;
 use serde::Serialize;
 
+use crate::mono::{self, MonoInfo};
 use crate::session::LriSession;
 use crate::threads;
 
@@ -26,6 +27,8 @@ pub struct LriSummary {
 	pub image_count: usize,
 	pub cameras: Vec<CameraSummary>,
 	pub fusion: FusionSummary,
+	/// Panchromatic modules present in this capture (A2 / C6).
+	pub mono: MonoInfo,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -47,6 +50,10 @@ pub struct CameraSummary {
 	pub width: usize,
 	pub height: usize,
 	pub bayer_jpeg: bool,
+	/// True when sensor is AR1335 Mono (no CFA).
+	pub is_mono: bool,
+	/// Optical design hint: 28 for A2 mono, 150 for C6 mono.
+	pub mono_focal_mm: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -74,12 +81,7 @@ pub fn scan_directory(path: impl AsRef<Path>) -> Result<DirScan> {
 	let entries: Vec<PathBuf> = std::fs::read_dir(path)
 		.with_context(|| format!("read {}", path.display()))?
 		.filter_map(|entry| entry.ok())
-		.filter(|entry| {
-			entry
-				.metadata()
-				.map(|m| m.is_file())
-				.unwrap_or(false)
-		})
+		.filter(|entry| entry.metadata().map(|m| m.is_file()).unwrap_or(false))
 		.map(|entry| entry.path())
 		.filter(|p| p.extension().and_then(|e| e.to_str()) == Some("lri"))
 		.collect();
@@ -117,9 +119,7 @@ fn summarize_inner(path: String, name: String, lri: &LriFile<'_>) -> LriSummary 
 		name,
 		firmware: lri.firmware_version.clone(),
 		focal_length: lri.focal_length,
-		integration_ms: lri
-			.image_integration_time
-			.map(|d| d.as_millis() as u64),
+		integration_ms: lri.image_integration_time.map(|d| d.as_millis() as u64),
 		gain: lri.image_gain,
 		hdr: lri.hdr.map(hdr_label),
 		scene: lri.scene.map(scene_label),
@@ -127,12 +127,11 @@ fn summarize_inner(path: String, name: String, lri: &LriFile<'_>) -> LriSummary 
 		af_achieved: lri.af_achieved,
 		awb: lri.awb.map(awb_label),
 		awb_gain: lri.awb_gain.map(|g| [g.r, g.gr, g.gb, g.b]),
-		reference_camera: lri
-			.image_reference_camera
-			.map(|c| c.to_string()),
+		reference_camera: lri.image_reference_camera.map(|c| c.to_string()),
 		image_count: lri.image_count(),
 		cameras: lri.images().map(camera_summary).collect(),
 		fusion: fusion_summary(lri),
+		mono: mono::mono_info(lri),
 	}
 }
 
@@ -154,6 +153,7 @@ fn fusion_summary(lri: &LriFile<'_>) -> FusionSummary {
 }
 
 fn camera_summary(img: &lri_rs::RawImage<'_>) -> CameraSummary {
+	let is_mono = mono::is_mono_image(img);
 	CameraSummary {
 		id: img.camera.to_string(),
 		sensor: sensor_label(img.sensor),
@@ -161,6 +161,12 @@ fn camera_summary(img: &lri_rs::RawImage<'_>) -> CameraSummary {
 		width: img.width,
 		height: img.height,
 		bayer_jpeg: matches!(img.format, DataFormat::BayerJpeg),
+		is_mono,
+		mono_focal_mm: if is_mono {
+			mono::mono_focal_mm(img.camera)
+		} else {
+			None
+		},
 	}
 }
 

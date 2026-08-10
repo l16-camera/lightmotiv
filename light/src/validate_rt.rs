@@ -154,11 +154,7 @@ fn run_decoded(
 	write_gray_png(&output.join("our_blend.png"), &our_blend)?;
 	write_gray_png(&output.join("lumen_resized.png"), &lumen_fit)?;
 	write_gray_png(&output.join("diff.png"), &diff)?;
-	write_side_by_side(
-		&output.join("side_by_side.png"),
-		&our_blend,
-		&lumen_fit,
-	)?;
+	write_side_by_side(&output.join("side_by_side.png"), &our_blend, &lumen_fit)?;
 
 	let summary = ValidateSummary {
 		reference_camera: ref_cam.to_string(),
@@ -171,18 +167,12 @@ fn run_decoded(
 	};
 
 	let summary_path = output.join("validate.json");
-	fs::write(
-		&summary_path,
-		serde_json::to_string_pretty(&summary)?,
-	)
-	.context("write validate.json")?;
+	fs::write(&summary_path, serde_json::to_string_pretty(&summary)?)
+		.context("write validate.json")?;
 
 	eprintln!(
 		"blend vs lumen: mae={blend_mae:.2} ncc={blend_ncc:.4} ({}x{} → {}x{})",
-		lumen.0,
-		lumen.1,
-		ref_w,
-		ref_h
+		lumen.0, lumen.1, ref_w, ref_h
 	);
 	eprintln!("wrote {summary_path}");
 
@@ -371,7 +361,9 @@ fn blend_overlay(base: &GrayImage, top: &GrayImage, alpha: f64) -> GrayImage {
 }
 
 fn load_lumen_gray(path: &Utf8Path) -> Result<(u32, u32, Vec<u8>)> {
-	let img = image::open(path).with_context(|| format!("open {path}"))?.to_rgb8();
+	let img = image::open(path)
+		.with_context(|| format!("open {path}"))?
+		.to_rgb8();
 	let (w, h) = img.dimensions();
 	let gray: Vec<u8> = img
 		.pixels()
@@ -433,10 +425,7 @@ mod tests {
 
 	#[test]
 	fn scaled_k_scales_focal_and_principal_point() {
-		let k = scaled_k(
-			[200.0, 0.0, 100.0, 0.0, 200.0, 80.0, 0.0, 0.0, 1.0],
-			4,
-		);
+		let k = scaled_k([200.0, 0.0, 100.0, 0.0, 200.0, 80.0, 0.0, 0.0, 1.0], 4);
 		assert!((k[(0, 0)] - 50.0).abs() < 1e-9);
 		assert!((k[(0, 2)] - 25.0).abs() < 1e-9);
 		assert!((k[(1, 1)] - 50.0).abs() < 1e-9);
@@ -536,8 +525,16 @@ mod tests {
 		assert!(summary.blend_ncc_vs_lumen > 0.0);
 		assert_eq!(summary.modules.len(), 10);
 		assert!(summary.modules.iter().any(|m| m.has_movable_mirror));
-		let b2 = summary.modules.iter().find(|m| m.camera == "B2").expect("B2");
-		let b3 = summary.modules.iter().find(|m| m.camera == "B3").expect("B3");
+		let b2 = summary
+			.modules
+			.iter()
+			.find(|m| m.camera == "B2")
+			.expect("B2");
+		let b3 = summary
+			.modules
+			.iter()
+			.find(|m| m.camera == "B3")
+			.expect("B3");
 		let b2_ncc = b2.lumen_ncc.expect("B2 lumen ncc");
 		let b3_ncc = b3.lumen_ncc.expect("B3 lumen ncc");
 		assert!(

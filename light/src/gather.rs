@@ -6,8 +6,8 @@ use std::{
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use lri_rs::{
-	AwbMode, DataFormat, HdrMode, LriFile, MirrorType, SceneMode, SensorModel,
-	target_intrinsics_focus_distance,
+	target_intrinsics_focus_distance, AwbMode, CameraId, DataFormat, HdrMode, LriFile, MirrorType,
+	SceneMode, SensorModel,
 };
 use owo_colors::OwoColorize;
 
@@ -23,10 +23,7 @@ pub fn run(data_dir: &Utf8Path) -> Result<()> {
 			continue;
 		}
 
-		let stub = path
-			.file_stem()
-			.context("missing file stem")?
-			.to_owned();
+		let stub = path.file_stem().context("missing file stem")?.to_owned();
 
 		match path.extension() {
 			Some("jpg") => {
@@ -137,6 +134,7 @@ pub fn run(data_dir: &Utf8Path) -> Result<()> {
 			}
 		}
 
+		let mut mono_tags: Vec<String> = Vec::new();
 		for img in lri.images() {
 			let sens = match img.sensor {
 				SensorModel::Ar1335 => "a13",
@@ -148,6 +146,19 @@ pub fn run(data_dir: &Utf8Path) -> Result<()> {
 				DataFormat::BayerJpeg => print!("{} ", sens.cyan()),
 				DataFormat::Packed10bpp => print!("{} ", sens.yellow()),
 			}
+
+			if matches!(img.sensor, SensorModel::Ar1335Mono) {
+				let tag = match img.camera {
+					CameraId::A2 => "A2≈28mm".to_string(),
+					CameraId::C6 => "C6≈150mm".to_string(),
+					other => format!("{other}"),
+				};
+				mono_tags.push(tag);
+			}
+		}
+
+		if !mono_tags.is_empty() {
+			print!("| mono:{} ", mono_tags.join(",").bright_white());
 		}
 
 		let fus = &lri.fusion;
@@ -169,7 +180,12 @@ pub fn run(data_dir: &Utf8Path) -> Result<()> {
 			let target = target_intrinsics_focus_distance(focal);
 			let picks = fus.pick_all_focus_bundles(focal);
 			let with_rt = picks.iter().filter(|(_, s)| s.has_extrinsics).count();
-			print!(" focus:{focal}→{target:.0} pick:{}/{} K+Rt:{}", picks.len(), fus.geometry_module_count(), with_rt);
+			print!(
+				" focus:{focal}→{target:.0} pick:{}/{} K+Rt:{}",
+				picks.len(),
+				fus.geometry_module_count(),
+				with_rt
+			);
 		}
 		if let Some(tof) = fus.tof_range_m {
 			print!(" tof:{tof:.2}");
