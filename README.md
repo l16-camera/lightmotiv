@@ -28,20 +28,64 @@ make install   # → ~/.cargo/bin/light
 ```bash
 make lumen-release
 ./target/release/lumen
+
+# shippable app (embeds libcp-export)
+make package-macos
+open dist/Luminat.app
 ```
 
-Drag-drop `.lri`, camera grid with parallel thumbnails, DNG export with progress bar. Session cache avoids re-reading the file on every action.
+Drag-drop `.lri`, camera grid, **libcp Render** (Light engine, profile 13 MP / Desktop), DNG export. Software fuse is under Experimental. See [LUMEN_PLAN.md](LUMEN_PLAN.md).
 
 For live reload during UI work, install the Tauri CLI once (`cargo install tauri-cli`) and run `cargo tauri dev` from `lumen/src-tauri`.
+
+### Camera + batch (M2, in Luminat app)
+
+- **From camera…** — adb list/pull `/sdcard/DCIM/Camera/*.lri` (optional libcp after pull)
+- **Batch render** — libcp all files in the library sidebar
+- Cache: `~/Library/Caches/lri-drop/camera/` and `*.libcp.p{N}.jpg` beside each LRI
 
 ## `light` CLI
 
 | Command | Description |
 | ------- | ----------- |
-| `light gather <dir>` | Metadata + fusion summary for every `.lri` (parallel scan) |
-| `light extract <lri> <out> [--jobs N]` | Per-camera DNG export; `LIGHT_JOBS` env or P-core count on macOS |
+| `light gather <dir>` | Metadata + fusion + **mono** tags for every `.lri` |
+| `light extract <lri\|dir> <out>` | Per-camera DNG; dir → batch; `--only-mono`, mono PNG previews |
+| `light fuse --lri … -o …` | Software plane-sweep fusion (research / geometry lab) |
+| `light libcp --lri … -o …` | Light `libcp.dylib` quality fuse (needs Lumen frameworks) |
+| `light libcp --dir … -o …` | **Batch** libcp over a folder of captures |
+| `light libcp … --fnumber 4 --focus-x 0.5 --focus-y 0.4 --depth-map` | **M4** aperture + click-refocus + depth (DESKTOP) |
 
-`gather` appends fusion hints per file, e.g. `fus geo:16/16 mir:12 tof:1.23 imu:4 gps`.
+`gather` appends fusion hints and mono, e.g. `a1m … \| mono:A2≈28mm fus geo:16/16`.
+
+### Mono (A2 / C6)
+
+Panchromatic AR1335 modules export as `A2_mono.dng` / `C6_mono.dng` plus optional
+`mono/*.png` previews and `mono.json`. GUI: mono panel + “Export mono DNGs”.
+
+```bash
+./target/release/light extract photo.lri ./out --only-mono
+./target/release/light extract ./forest/ ./dngs/          # batch per stem
+```
+
+### Optional libcp backend (macOS + Rosetta)
+
+Native `light fuse` is open-source MVP fusion. For Lumen-quality RGB, use the closed
+engine from Lumen.app (not redistributed):
+
+```bash
+make libcp-export          # build x86_64 tools/libcp-export/libcp-export
+make release
+# libcp.dylib + libceres.dylib from Lumen.app/Contents/Frameworks
+export LUMINAT_LIBCP_DIR="/Applications/Lumen.app/Contents/Frameworks"
+./target/release/light libcp --lri photo.lri -o ./out --format jpg          # profile 1 ≈ 13 MP
+./target/release/light libcp --lri photo.lri -o ./out --profile 3 --format jpg  # DESKTOP 10432×7824
+./target/release/light libcp --lri photo.lri -o ./out --fnumber 4 \
+  --focus-x 0.5 --focus-y 0.4 --depth-map   # refocus + depth (auto profile 3)
+
+./target/release/light libcp --dir ./forest/ -o ./libcp-out --format jpg
+```
+
+Details: [tools/libcp-export/README.md](tools/libcp-export/README.md).
 
 Replaces the older `prism` and `lri-study` binaries (still in repo, no longer in workspace).
 
@@ -87,7 +131,7 @@ session.with_lri(|lri| { /* ... */ })?;
 
 | File / tool | Role |
 | ----------- | ---- |
-| `VERSION` | Single source of truth (`2026.7.14`) |
+| `VERSION` | Single source of truth (`2026.8.10`) |
 | `./scripts/calver` | `show`, `sync`, `check`, `bump`, `bump-micro` |
 | `make version-bump` | Set today's UTC date and sync `Cargo.toml` + `tauri.conf.json` |
 
@@ -138,7 +182,8 @@ make bench    # tenbit unpack benchmark
 | GUI thumbnails + drag-drop + export progress | Yes (`lumen`) |
 | `sensor_data` black/white levels | Yes (`levels_for`) |
 | Fusion metadata (geometry K/R/t, ToF, IMU, GPS) | Partial — [FUSION.md](FUSION.md) |
-| 16→1 Lumen combine | Not yet — research in [FUSION.md](FUSION.md) |
+| 16→1 combine via Light `libcp` (CIAPI) | Yes — `light libcp`, Luminat **Render**, aperture / click-refocus / depth map |
+| 16→1 **own** combine (open, in-tree) | Grayscale MVP — undistort + plane-sweep depth + warp + blend; colour pending ([FUSION.md](FUSION.md)) |
 
 ## Resources
 

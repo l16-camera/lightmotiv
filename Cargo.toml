@@ -3,7 +3,7 @@ members = ["lri-proto", "lri-rs", "light", "lumen/src-tauri"]
 resolver = "2"
 
 [workspace.package]
-version = "2026.7.14"
+version = "2026.8.10"
 edition = "2021"
 authors = ["isamarin × BLMK"]
 

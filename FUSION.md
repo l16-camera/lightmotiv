@@ -4,8 +4,8 @@ Living document for **humans and agents** building 16→1 combine on top of `lri
 Add findings in small PRs; link code paths and protos; mark confidence.
 
 **Maintained by:** isamarin × BLMK  
-**Status:** research / incremental extraction  
-**Last updated:** 2026-07-14 (firmware 1.3.5.1 audit + gallery pipeline)
+**Status:** product on libcp (Luminat M0–M4 shipped) · open engine still grayscale MVP  
+**Last updated:** 2026-08-10 (roadmap synced to code; Phase 3 MVP, Phase 4 export, Luminat M1–M4)
 
 **L16 archive (submodule):** [`vendor/light-l16`](vendor/light-l16) → [github.com/isamarin/light-l16](https://github.com/isamarin/light-l16)
 
@@ -115,28 +115,38 @@ Open questions — fill in when confirmed:
 
 ### Phase 1 — Calibration access
 
-- [ ] Full `Distortion` + `VignettingCharacterization` structs
-- [ ] `MirrorSystem` + `MirrorActuatorMapping` numeric extract
-- [ ] Select focus bundle: match `image_focal_length` / hall code to `per_focus_calibration`
+- [ ] Full `Distortion` + `VignettingCharacterization` structs (CRA radial done, polynomial + vignetting pending)
+- [x] `MirrorSystem` numeric extract + movable-mirror R/t (`mirror_pose.rs`)
+- [ ] `MirrorActuatorMapping` numeric extract
+- [x] Select focus bundle: match `image_focal_length` to `per_focus_calibration` (`fusion::pick_focus_bundle`)
 - [x] Export fusion JSON sidecar next to DNG export (`light extract` → `fusion.json`)
 
 ### Phase 2 — Geometric warp
 
-- [ ] Project module RAW → common reference plane (likely `image_reference_camera`)
-- [ ] Apply distortion + mirror model
+- [x] Project module RAW → common reference plane (`image_reference_camera`)
+- [x] Apply distortion (CRA radial) + mirror model — `distortion.rs`, `mirror_pose.rs`, `warp.rs`
 - [ ] IMU-based row timing correction (if needed)
 
 ### Phase 3 — Depth + blend
 
-- [ ] ToF-guided coarse depth map
-- [ ] Refine with multi-module stereo / focus stack
-- [ ] Per-pixel weights (aperture, vignette, distance to depth)
-- [ ] Colour / exposure harmonization across modules
+- [x] ToF-guided coarse depth (`fuse::depth_range_from_tof` centres the sweep on the metric hint)
+- [x] Multi-module plane-sweep depth (`stereo::plane_sweep`) — **MVP, grayscale**
+- [ ] Dense per-pixel WarpField / SGM instead of a single sweep plane
+- [x] Blend with per-pixel accumulation + masking (`fuse::accumulate_masked`, `normalize_blend`)
+- [ ] Occlusion + confidence weights (`DepthAndOcc`, `confidence` — see libcp RE below)
+- [ ] **Colour**: per-module debayer → linear RGB → colour matrices → vignetting flat-field →
+      exposure/WB harmonization. *This is the main remaining gap to a self-owned engine.*
 
 ### Phase 4 — Output
 
-- [ ] Fused 16-bit TIFF / DNG
-- [ ] Match Lumen crop / orientation from `view_preferences`
+- [x] Fused full-res TIFF / DNG export with view crop (`fuse_export.rs`, `tiff_out.rs`)
+- [x] Match Lumen crop / orientation from `view_preferences`
+
+### Phase 5 — Product (see [LUMEN_PLAN.md](LUMEN_PLAN.md))
+
+Luminat M0–M4 landed 2026-08-05: Tauri GUI, libcp Render (profile 1/3), ADB camera pull,
+batch, `.app` packaging, aperture / click-refocus / depth map. Quality 16→1 is **libcp-only**
+by design; the in-tree fuse above stays the open, experimental track.
 
 ---
 
@@ -397,3 +407,35 @@ When working on fusion:
 **Finding:** Writer emits: magic `LELR` (4) · `block_length` u64 LE · `message_offset` u64 LE (= `HEADER_LENGTH`) · `message_length` u32 LE · `type` u8 · 7 zero reserved · protobuf bytes. `TYPE_VIEW_PREFS=1`, `TYPE_GPS_DATA=2`. `HEADER_LENGTH = 4+8+8+4+1+7 = 32`.  
 **Implication:** Matches [`LRI.md`](LRI.md) and `lri-rs/src/block.rs::Header::ingest` — no Android-specific quirks.  
 **Follow-up:** None.
+
+### 2026-07-14 — Movable-mirror pose: `flip_img_around_x` handling was wrong
+
+**Confidence:** confirmed  
+**Source:** `lri-rs/src/mirror_pose.rs`, commit `cff7a7d`, NCC validation in `light/src/validate_rt.rs`  
+**Finding:** Base R/t from `module_calibration` was already correct (B4↔B2/B3 pairs score NCC ≈ 0.4), but reflected poses for part of the movable set (B1, B5, all C) came out with NCC ≈ 0 or negative. Root cause was the `flip_img_around_x` branch in the mirror reflection, not the extrinsics convention.  
+**Implication for combine:** Removes the last known geometry blocker before dense stereo — all movable modules now warp into the reference frame consistently.  
+**Follow-up:** [ ] Re-measure NCC across the full 101-capture corpus once the golden set exists.
+
+### 2026-07-14 — Phase 3 MVP: undistort → plane-sweep → warp → blend
+
+**Confidence:** confirmed  
+**Source:** `light/src/fuse.rs`, `lri-rs/src/{stereo,warp,distortion}.rs`, commits `7125539`, `df5d059`  
+**Finding:** End-to-end in-tree fusion runs: CRA radial undistort (`LensUndistortCRA`), plane-sweep over a ToF-centred depth range, homography warp to the reference module, masked accumulation and normalized blend. Output is **grayscale** — the whole path operates on `GrayImage`.  
+**Implication for combine:** Geometry and depth are now testable end-to-end, but this is not yet a Lumen substitute: colour (debayer → linear RGB → colour matrices → vignetting → exposure/WB harmonization) is entirely absent.  
+**Follow-up:** [ ] Colour path. [ ] Replace single-plane sweep with dense per-pixel WarpField.
+
+### 2026-07-14 — Phase 4: full-res TIFF/DNG export with view crop
+
+**Confidence:** confirmed  
+**Source:** `light/src/fuse_export.rs`, `light/src/tiff_out.rs`, commit `7a4f77b`  
+**Finding:** Fused output writes full-resolution TIFF/DNG and honours crop/orientation from `view_preferences`.  
+**Implication for combine:** Output stage is no longer a gap; quality is bounded by the fusion stage, not the writer.  
+**Follow-up:** None.
+
+### 2026-08-05 — Luminat M1–M4: libcp-first product shell
+
+**Confidence:** confirmed  
+**Source:** [`LUMEN_PLAN.md`](LUMEN_PLAN.md), `light/src/{libcp,camera,mono,config}.rs`, `lumen/`, `tools/libcp-export/`  
+**Finding:** Product track reached M4. Tauri 2 GUI with Light-engine Render (profile 1 ≈ 13 MP / profile 3 DESKTOP 10432×7824), ADB camera list/pull, batch render, `.app` packaging with embedded `libcp-export`, and M4 extras reverse-engineered from CIAPI: `setProperty(ParamFloat)` FocusDepth=1 / FNumber=3, `DepthEditor` 16 B shared_ptr with `getDepthAtPoint(Point<float>)`. Smoke on `L16_00026`: f/4 + click (0.5, 0.4) at profile 3 → z ≈ 16829 mm, depth map 320×240 valid.  
+**Implication for combine:** Quality 16→1 is intentionally **libcp-only** in the product; the in-tree fuse stays the open research track. This means Luminat currently depends on the user's own `Lumen.app` for `libcp.dylib` + `libceres.dylib` (x86_64, Rosetta) — a dependency the open engine is meant to eventually retire.  
+**Follow-up:** [ ] Golden set: run all 101 captures through `libcp` (profiles 1 and 3, plus depth maps) and store outputs as ground truth. This both measures the open engine (SSIM/PSNR) and preserves libcp behaviour against the day Rosetta or Lumen.app stops working.

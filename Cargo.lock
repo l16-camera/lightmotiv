@@ -2089,6 +2089,7 @@ version = "2026.7.14"
 dependencies = [
  "base64 0.22.1",
  "camino",
+ "image",
  "light",
  "lri-rs",
  "serde",
