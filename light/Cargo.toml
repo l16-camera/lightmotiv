@@ -2,7 +2,7 @@
 name = "light"
 version.workspace = true
 edition.workspace = true
-description = "Light L16 LRI tooling — isamarin × BLMK"
+description = "Light L16 LRI tooling — isamarin × IGRS"
 default-run = "light"
 
 [lib]

@@ -10,7 +10,7 @@ use light::{extract, fuse, gather, libcp, validate_rt};
 Luminat — a not-so-secret society for Light L16.\n\n\
 Sixteen modules witness; one image emerges. We decode .lri, undistort, warp, and blend — \
 the fusion rite Lumen kept behind closed doors.\n\n\
-All seeing is computational. isamarin × BLMK",
+All seeing is computational. isamarin × IGRS",
 	version
 )]
 struct Cli {

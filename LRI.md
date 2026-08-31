@@ -2,7 +2,7 @@
 
 LRI (Light Raw Image) is the proprietary RAW container used by the **Light L16**. A single capture is usually split across **10–11 blocks**; **40 blocks** have been observed on some files.
 
-This document describes the format as implemented in this fork (`lri-rs` crate). Maintained by **isamarin × BLMK**. When the code and this file disagree, **trust the code** — and please fix the doc.
+This document describes the format as implemented in this fork (`lri-rs` crate). Maintained by **isamarin × IGRS**. When the code and this file disagree, **trust the code** — and please fix the doc.
 
 Protobuf definitions live in [`lri-proto/proto/`](lri-proto/proto/). Bayer JPEG details are in [`bayer_jpeg.md`](bayer_jpeg.md).
 

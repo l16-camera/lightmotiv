@@ -5,7 +5,8 @@ resolver = "2"
 [workspace.package]
 version = "2026.8.10"
 edition = "2021"
-authors = ["isamarin × BLMK"]
+authors = ["isamarin × IGRS"]
+license = "MIT OR Apache-2.0"
 
 [profile.release]
 opt-level = 3

@@ -1,8 +1,15 @@
-# lri-rs
+# lightmotiv
 
 Rust workspace for **Light L16** `.lri` (Light Raw Image) files — parse, survey, export per-camera RAW, and research the Lumen 16→1 fusion pipeline.
 
-Fork maintained by **isamarin × BLMK**. Version: **CalVer** (`YYYY.M.D`) — see `VERSION` and `./scripts/calver`.
+> **Built on [gennyble/lri-rs](https://github.com/gennyble/lri-rs).** lightmotiv is a
+> fork of that project, which reverse-engineered the `.lri` container and the Protobuf
+> metadata inside it. Every `.lri` file this workspace opens is opened by gennyble's
+> parser. What the fork adds on top is the `light` CLI with per-module Adobe DNG
+> output, the Lumen desktop GUI, and camera pull over `adb`. See [NOTICE](NOTICE) for
+> the file-by-file split and the licensing status of the upstream parts.
+
+Maintained by **isamarin × IGRS**. Version: **CalVer** (`YYYY.M.D`) — see `VERSION` and `./scripts/calver`.
 
 ## Quick start
 
@@ -201,11 +208,25 @@ git submodule update --init
 
 ## Credits
 
-- Original parser & docs — [gennyble](https://github.com/nyble) / [dllu/lri-rs](https://github.com/dllu/lri-rs)
-- This fork — **isamarin × BLMK**
+- Original parser & docs — [gennyble](https://github.com/nyble) ([gennyble/lri-rs](https://github.com/gennyble/lri-rs))
+- Protobuf types — [Daniel Lawrence Lu](https://github.com/dllu) ([dllu/lri-rs](https://github.com/dllu/lri-rs))
+- This fork — **isamarin × IGRS**
 
 ## Licensing
 
-- `lri-proto` — MIT, Daniel Lawrence Lu
-- Upstream crates (`lri-rs`, `light`, …) — ISC, gennyble \<gen@nyble.dev\>
-- Fork changes — isamarin × BLMK
+Inherited crates keep their own terms, reproduced in full in each directory's
+`LICENSE` file:
+
+| Path | License | Copyright |
+| ---- | ------- | --------- |
+| `lri-rs/` | ISC | 2023 gennyble \<gen@nyble.dev\> |
+| `prism/` | ISC | 2023 gennyble \<gen@nyble.dev\> |
+| `lri-study/` | ISC | 2023 gennyble \<gen@nyble.dev\> |
+| `lri-proto/` | MIT | 2021 Daniel Lawrence Lu |
+
+Everything original to this fork — `light/`, `lumen/`, `tools/`, `scripts/`,
+`FUSION.md`, `LUMEN_PLAN.md`, `BUGS.md` — is licensed under either
+[Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at your option.
+
+See [NOTICE](NOTICE) for the full file-by-file split. Contributions are dual
+licensed the same way unless you say otherwise.

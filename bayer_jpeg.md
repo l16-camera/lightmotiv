@@ -1,6 +1,6 @@
 # Bayer JPEG (BJPG)
 
-Bayer JPEG is a proprietary container format used by the **Light L16** for some RAW captures. Notes for the **isamarin × BLMK** fork. Instead of writing packed 10-bit sensor data, the camera stores one or more **8-bit JPEG** images inside a `BJPG` wrapper.
+Bayer JPEG is a proprietary container format used by the **Light L16** for some RAW captures. Notes for the **isamarin × IGRS** fork. Instead of writing packed 10-bit sensor data, the camera stores one or more **8-bit JPEG** images inside a `BJPG` wrapper.
 
 We still do not know **when** the firmware chooses Bayer JPEG over `RAW_PACKED_10BPP`, or what triggers the switch.
 

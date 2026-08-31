@@ -1,0 +1,55 @@
+lightmotiv
+Copyright (c) 2026 Igor Samarin
+
+This file records what in this workspace is original and what is inherited, and
+under which terms. It supplements — and does not replace — the LICENSE files
+that sit inside the individual crates.
+
+
+ORIGINAL WORK
+=============
+
+The following are original to this fork and are licensed under either of
+
+  * Apache License, Version 2.0 ...... LICENSE-APACHE
+  * MIT license ...................... LICENSE-MIT
+
+at your option:
+
+    light/           `light` CLI — gather, extract, per-module Adobe DNG output
+    lumen/           Desktop GUI (Tauri 2), libcp render, camera pull over adb
+    tools/           Build and analysis helpers
+    scripts/         CalVer and packaging scripts
+    FUSION.md        Fusion pipeline research
+    LUMEN_PLAN.md    GUI roadmap
+    BUGS.md          Defect journal
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this work by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+
+
+INHERITED WORK
+==============
+
+lightmotiv is a fork of lri-rs by gennyble:
+
+    https://github.com/gennyble/lri-rs
+
+That project reverse-engineered the Light L16 `.lri` container and the Protobuf
+metadata inside it. Everything this workspace does with `.lri` files rests on
+it. The inherited parts keep their own terms and their own copyright notices,
+which are reproduced in full in the LICENSE file of each directory:
+
+    lri-rs/          ISC License, Copyright 2023 gennyble <gen@nyble.dev>
+    prism/           ISC License, Copyright 2023 gennyble <gen@nyble.dev>
+    lri-study/       ISC License, Copyright 2023 gennyble <gen@nyble.dev>
+    lri-proto/       MIT License, Copyright (c) 2021 Daniel Lawrence Lu
+
+`lri-proto` reaches this workspace through upstream and originates with
+dllu/lri-rs: https://github.com/dllu/lri-rs
+
+ISC and MIT are both permissive and impose no restriction on the dual license
+chosen for the original work above. Redistributing this workspace, in source or
+in binary form, requires carrying the notices above — which is why they are
+listed here as well as in each directory.

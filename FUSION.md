@@ -3,7 +3,7 @@
 Living document for **humans and agents** building 16→1 combine on top of `lri-rs`.  
 Add findings in small PRs; link code paths and protos; mark confidence.
 
-**Maintained by:** isamarin × BLMK  
+**Maintained by:** isamarin × IGRS  
 **Status:** product on libcp (Luminat M0–M4 shipped) · open engine still grayscale MVP  
 **Last updated:** 2026-08-10 (roadmap synced to code; Phase 3 MVP, Phase 4 export, Luminat M1–M4)
 

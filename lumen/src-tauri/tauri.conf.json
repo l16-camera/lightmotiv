@@ -2,7 +2,7 @@
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "Luminat",
 	"version": "2026.8.10",
-	"identifier": "dev.blmk.luminat",
+	"identifier": "dev.igrs.luminat",
 	"build": {
 		"frontendDist": "../ui"
 	},
@@ -10,7 +10,7 @@
 		"withGlobalTauri": true,
 		"windows": [
 			{
-				"title": "Luminat — 16 witness, 1 emerges · isamarin × BLMK",
+				"title": "Luminat — 16 witness, 1 emerges · isamarin × IGRS",
 				"width": 1280,
 				"height": 840,
 				"minWidth": 960,

@@ -2,7 +2,7 @@
 name = "lumen"
 version.workspace = true
 edition.workspace = true
-description = "Luminat — illuminate the 16→1 ritual (Light L16 desktop) — isamarin × BLMK"
+description = "Luminat — illuminate the 16→1 ritual (Light L16 desktop) — isamarin × IGRS"
 
 [lib]
 name = "lumen_lib"

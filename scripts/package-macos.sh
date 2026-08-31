@@ -44,7 +44,7 @@ cat > "$APP/Contents/Info.plist" << EOF
   <key>CFBundleExecutable</key>
   <string>Luminat</string>
   <key>CFBundleIdentifier</key>
-  <string>dev.blmk.luminat</string>
+  <string>dev.igrs.luminat</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
