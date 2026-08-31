@@ -156,7 +156,7 @@ by design; the in-tree fuse above stays the open, experimental track.
 | -------- | ----- |
 | **[isamarin/light-l16](https://github.com/isamarin/light-l16)** | **Git submodule** at [`vendor/light-l16/`](vendor/light-l16/) — maintained L16 archive (fork of helloavo) |
 | [helloavo/Light-L16-Archive](https://github.com/helloavo/Light-L16-Archive) | Upstream archive; isamarin fork is the working copy in this repo |
-| [isamarin/lri-rs](https://github.com/isamarin/lri-rs) | This decoder / GUI / fusion R&D repo |
+| [l16-camera/lightmotiv](https://github.com/l16-camera/lightmotiv) | This decoder / GUI / fusion R&D repo |
 | [dllu/lri-rs](https://github.com/dllu/lri-rs) / [gennyble/lri-rs](https://github.com/gennyble/lri-rs) | Proto extraction basis |
 | [LRI.md](LRI.md) | Container format |
 | [bayer_jpeg.md](bayer_jpeg.md) | BJPG decode |

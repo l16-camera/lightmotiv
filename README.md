@@ -201,7 +201,7 @@ make bench    # tenbit unpack benchmark
 Clone:
 
 ```bash
-git clone --recurse-submodules https://github.com/isamarin/lri-rs.git
+git clone --recurse-submodules https://github.com/l16-camera/lightmotiv.git
 # or after clone:
 git submodule update --init
 ```
